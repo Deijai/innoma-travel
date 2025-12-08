@@ -1,98 +1,167 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+// app/(tabs)/index.tsx
+import { FabButton } from '@/components/common/FabButton';
+import { HomeHeader } from '@/components/home/HomeHeader';
+import { PastTripItem } from '@/components/home/PastTripItem';
+import { TripCard } from '@/components/home/TripCard';
+import { router } from 'expo-router';
+import React from 'react';
+import {
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
 
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
+export default function Index() {
+    return (
+        <View style={styles.container}>
+            <StatusBar barStyle="dark-content" />
+
+            {/* Header */}
+            <HomeHeader
+                welcomeText="Welcome back"
+                title="My Trips"
+                avatarUrl="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80"
             />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+            {/* Conteúdo principal */}
+            <ScrollView
+                style={styles.content}
+                contentContainerStyle={{ paddingBottom: 120 }}
+                showsVerticalScrollIndicator={false}
+            >
+                {/* Upcoming Adventures */}
+                <View style={styles.section}>
+                    <View style={styles.sectionHeaderRow}>
+                        <Text style={styles.sectionTitle}>Upcoming Adventures</Text>
+                        <TouchableOpacity>
+                            <Text style={styles.seeAllText}>See All</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.upcomingScroll}
+                    >
+                        {/* Card 1 */}
+                        <TripCard
+                            imageUrl="https://images.unsplash.com/photo-1537996194471-e657df975ab4?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80"
+                            badgeIcon="time-outline"
+                            badgeText="5 Days left"
+                            country="Indonesia"
+                            title="Bali"
+                            participants={[
+                                {
+                                    avatarUrl:
+                                        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
+                                },
+                                {
+                                    avatarUrl:
+                                        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
+                                },
+                            ]}
+                            extraParticipantsLabel="+2"
+                            onPress={() => router.push('/(trip)/trip-detail')}
+                        />
+
+                        {/* Card 2 */}
+                        <TripCard
+                            imageUrl="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80"
+                            badgeIcon="calendar-outline"
+                            badgeText="Nov 14"
+                            country="Japan"
+                            title="Kyoto"
+                            participants={[
+                                {
+                                    avatarUrl:
+                                        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
+                                },
+                            ]}
+                        />
+                    </ScrollView>
+                </View>
+
+                {/* Past Journeys */}
+                <View style={[styles.section, { paddingHorizontal: 24 }]}>
+                    <Text style={styles.sectionTitle}>Past Journeys</Text>
+
+                    <View style={styles.pastList}>
+                        <PastTripItem
+                            imageUrl="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80"
+                            title="Paris, France"
+                            dateText="Oct 12 - Oct 20, 2023"
+                            rating={4.8}
+                            tags={['Leisure', 'Food']}
+                        />
+
+                        <PastTripItem
+                            imageUrl="https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80"
+                            title="New York, USA"
+                            dateText="Jul 04 - Jul 10, 2023"
+                            rating={5.0}
+                            tags={['Business']}
+                        />
+
+                        <PastTripItem
+                            imageUrl="https://images.unsplash.com/photo-1580060839134-75a5edca2e27?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80"
+                            title="Cape Town"
+                            dateText="Jan 15 - Jan 25, 2023"
+                            rating={4.9}
+                            tags={['Adventure']}
+                        />
+                    </View>
+                </View>
+            </ScrollView>
+
+            {/* FAB – botão flutuante */}
+            <FabButton
+                iconName="add"
+                onPress={() => {
+                    // ex: router.push('/(trip)/create-trip');
+                }}
+            />
+        </View>
+    );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+    container: {
+        flex: 1,
+        backgroundColor: '#ffffff',
+    },
+    content: {
+        flex: 1,
+    },
+    section: {
+        marginTop: 16,
+    },
+    sectionHeaderRow: {
+        paddingHorizontal: 24,
+        marginBottom: 12,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-end',
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#0f172a',
+    },
+    seeAllText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#FF6B6B',
+    },
+    upcomingScroll: {
+        paddingHorizontal: 24,
+        paddingBottom: 16,
+    },
+    pastList: {
+        marginTop: 12,
+        gap: 12,
+    },
 });

@@ -1,0 +1,48 @@
+export const Colors = {
+    light: {
+        primary: '#FF6B6B',
+        primaryDark: '#ff5252',
+        secondary: '#4ECDC4',
+        background: '#FFFFFF',
+        surface: '#F5F5F5',
+        card: '#FFFFFF',
+        text: '#1A1A1A',
+        textSecondary: '#6B7280',
+        textTertiary: '#9CA3AF',
+        border: '#E5E7EB',
+        error: '#EF4444',
+        success: '#10B981',
+        warning: '#F59E0B',
+        shadow: 'rgba(0, 0, 0, 0.1)',
+        overlay: 'rgba(0, 0, 0, 0.5)',
+        disabled: '#D1D5DB',
+        icon: '#4B5563',
+        tabBar: '#FFFFFF',
+        tabBarInactive: '#9CA3AF',
+    },
+    dark: {
+        primary: '#FF6B6B',
+        primaryDark: '#ff5252',
+        secondary: '#4ECDC4',
+        background: '#0F0F0F',
+        surface: '#1A1A1A',
+        card: '#262626',
+        text: '#FFFFFF',
+        textSecondary: '#D1D5DB',
+        textTertiary: '#9CA3AF',
+        border: '#374151',
+        error: '#F87171',
+        success: '#34D399',
+        warning: '#FBBF24',
+        shadow: 'rgba(0, 0, 0, 0.5)',
+        overlay: 'rgba(0, 0, 0, 0.7)',
+        disabled: '#4B5563',
+        icon: '#D1D5DB',
+        tabBar: '#1A1A1A',
+        tabBarInactive: '#6B7280',
+    },
+};
+
+export type ColorScheme = keyof typeof Colors;
+export type ThemeColors = typeof Colors.light;
+export type ThemeMode = 'light' | 'dark' | 'auto';
