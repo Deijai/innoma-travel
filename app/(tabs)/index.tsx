@@ -13,11 +13,12 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 export default function Index() {
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" />
 
             {/* Header */}
@@ -124,7 +125,7 @@ export default function Index() {
                     // ex: router.push('/(trip)/create-trip');
                 }}
             />
-        </View>
+        </SafeAreaView>
     );
 }
 

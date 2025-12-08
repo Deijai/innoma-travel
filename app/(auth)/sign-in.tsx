@@ -3,8 +3,11 @@ import { AuthHeader } from '@/components/auth/AuthHeader';
 import { AuthInput } from '@/components/auth/AuthInput';
 import { AuthLayout } from '@/components/auth/AuthLayout';
 import { SocialButton } from '@/components/auth/SocialButton';
+import { useAuthStore } from '@/stores/authStore';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+    Alert,
     Dimensions,
     StyleSheet,
     Text,
@@ -15,8 +18,45 @@ import {
 const { width, height } = Dimensions.get('window');
 
 export default function SignIn() {
+    const router = useRouter();
+    const { signIn, isLoading } = useAuthStore();
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+
+    async function handleSignIn() {
+        if (!email.trim() || !password) {
+            Alert.alert('Atenção', 'Preencha e-mail e senha.');
+            return;
+        }
+
+        try {
+            await signIn(email, password);
+
+            // ✅ Ajuste o nome da rota principal da sua aplicação
+            // Ex.: 'Tabs', 'Home', 'MainTabs', etc.
+            router.replace('/(tabs)');
+        } catch (error: any) {
+            Alert.alert(
+                'Erro ao entrar',
+                error?.message ?? 'Não foi possível fazer login. Verifique seus dados.'
+            );
+        }
+    }
+
+    function handleForgotPassword() {
+        // TODO: navegue para a tela de recuperação, se já existir
+        // navigation.navigate('RecoveryPassword');
+        Alert.alert(
+            'Recuperar senha',
+            'Fluxo de recuperação de senha ainda será implementado.'
+        );
+    }
+
+    function handleGoToSignUp() {
+        // Ajuste o nome da tela de cadastro conforme seu navigator
+        router.replace('/(auth)/sign-up');
+    }
 
     return (
         <AuthLayout>
@@ -55,7 +95,10 @@ export default function SignIn() {
                         autoCorrect={false}
                     />
 
-                    <TouchableOpacity style={styles.forgotPassword}>
+                    <TouchableOpacity
+                        style={styles.forgotPassword}
+                        onPress={handleForgotPassword}
+                    >
                         <Text style={styles.forgotPasswordText}>Esqueceu a senha?</Text>
                     </TouchableOpacity>
                 </View>
@@ -64,6 +107,8 @@ export default function SignIn() {
                 <TouchableOpacity
                     style={styles.signInButton}
                     activeOpacity={0.8}
+                    onPress={handleSignIn}
+                    disabled={isLoading}
                 >
                     <Text style={styles.signInButtonText}>Entrar</Text>
                 </TouchableOpacity>
@@ -93,7 +138,7 @@ export default function SignIn() {
 
                 <View style={styles.signUpContainer}>
                     <Text style={styles.signUpText}>Não tem uma conta? </Text>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={handleGoToSignUp}>
                         <Text style={styles.signUpLink}>Cadastre-se</Text>
                     </TouchableOpacity>
                 </View>

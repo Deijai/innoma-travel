@@ -7,14 +7,14 @@ import React from 'react';
 import {
     ScrollView,
     StatusBar,
-    StyleSheet,
-    View,
+    StyleSheet
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 export default function Intinerary() {
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" />
 
             {/* HEADER */}
@@ -128,7 +128,7 @@ export default function Intinerary() {
                     // ex: abrir modal para adicionar sugestão
                 }}
             />
-        </View>
+        </SafeAreaView>
     );
 }
 

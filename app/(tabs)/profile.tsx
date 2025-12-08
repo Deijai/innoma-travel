@@ -5,9 +5,13 @@ import { ProfileBottomNav } from '@/components/profile/ProfileBottomNav';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ProfileTopCard } from '@/components/profile/ProfileTopCard';
 import { TravelStyleSection } from '@/components/profile/TravelStyleSection';
+import { useAuthStore } from '@/stores/authStore';
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
+    Alert,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -15,10 +19,70 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ProfileScreen() {
+    const router = useRouter();
+    const { user, signOut, updateProfile, isLoading } = useAuthStore();
+    const [isUpdatingAvatar, setIsUpdatingAvatar] = useState(false);
+
+    const displayName = user?.name || 'Sarah Jenkins';
+    const avatarUrl =
+        user?.photoURL ||
+        'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&w=256&h=256&q=80';
+    const locationLabel = 'San Francisco, CA'; // ou algo dinâmico depois, se quiser
+
+    const handleEditAvatar = useCallback(async () => {
+        try {
+            setIsUpdatingAvatar(true);
+
+            const { status } =
+                await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+            if (status !== 'granted') {
+                Alert.alert(
+                    'Permissão negada',
+                    'Precisamos de acesso às fotos para alterar o avatar.'
+                );
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 0.8,
+            });
+
+            if (result.canceled) return;
+
+            const uri = result.assets[0].uri;
+
+            await updateProfile({ avatarLocalUri: uri });
+
+            Alert.alert('Sucesso', 'Foto de perfil atualizada!');
+        } catch (error: any) {
+            Alert.alert(
+                'Erro',
+                error?.message ?? 'Não foi possível atualizar a foto de perfil.'
+            );
+        } finally {
+            setIsUpdatingAvatar(false);
+        }
+    }, [updateProfile]);
+
+    const handleLogout = useCallback(async () => {
+        try {
+            await signOut();
+
+            router.replace('/(auth)/sign-in');
+        } catch (error: any) {
+            Alert.alert('Erro', error?.message ?? 'Não foi possível sair da conta.');
+        }
+    }, [signOut, router]);
+
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             <StatusBar barStyle="dark-content" />
 
             {/* HEADER */}
@@ -33,10 +97,10 @@ export default function ProfileScreen() {
             >
                 {/* Profile top */}
                 <ProfileTopCard
-                    avatarUrl="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&w=256&h=256&q=80"
-                    name="Sarah Jenkins"
-                    location="San Francisco, CA"
-                    onPressEditAvatar={() => { }}
+                    avatarUrl={avatarUrl}
+                    name={displayName}
+                    location={locationLabel}
+                    onPressEditAvatar={handleEditAvatar}
                 />
 
                 <View style={styles.main}>
@@ -128,7 +192,11 @@ export default function ProfileScreen() {
                     />
 
                     {/* Logout */}
-                    <TouchableOpacity style={styles.logoutBtn}>
+                    <TouchableOpacity
+                        style={styles.logoutBtn}
+                        onPress={handleLogout}
+                        disabled={isLoading || isUpdatingAvatar}
+                    >
                         <Ionicons
                             name="log-out-outline"
                             size={16}
@@ -153,7 +221,7 @@ export default function ProfileScreen() {
                 onPressChat={() => { }}
                 onPressProfile={() => { }}
             />
-        </View>
+        </SafeAreaView>
     );
 }
 

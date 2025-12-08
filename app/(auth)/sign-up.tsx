@@ -3,8 +3,11 @@ import { AuthHeader } from '@/components/auth/AuthHeader';
 import { AuthInput } from '@/components/auth/AuthInput';
 import { AuthLayout } from '@/components/auth/AuthLayout';
 import { SocialButton } from '@/components/auth/SocialButton';
+import { useAuthStore } from '@/stores/authStore';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+    Alert,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -12,12 +15,42 @@ import {
 } from 'react-native';
 
 export default function SignUp() {
+    const router = useRouter();
+    const { signUp, isLoading } = useAuthStore();
+
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
 
-    // const handleSignUp = () => { ... }
+    async function handleSignUp() {
+        if (!name.trim() || !email.trim() || !password || !confirmPassword) {
+            Alert.alert('Atenção', 'Preencha todos os campos.');
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            Alert.alert('Atenção', 'As senhas não conferem.');
+            return;
+        }
+
+        try {
+            // Não estamos passando avatar aqui (só na tela de Profile)
+            await signUp(name, email, password);
+
+            // ✅ Ajuste o nome da rota principal da sua aplicação
+            router.replace('/(tabs)');
+        } catch (error: any) {
+            Alert.alert(
+                'Erro ao criar conta',
+                error?.message ?? 'Não foi possível criar sua conta.'
+            );
+        }
+    }
+
+    function handleGoToSignIn() {
+        router.replace('/(auth)/sign-in');
+    }
 
     return (
         <AuthLayout>
@@ -87,7 +120,8 @@ export default function SignUp() {
                 <TouchableOpacity
                     style={styles.signInButton}
                     activeOpacity={0.8}
-                // onPress={handleSignUp}
+                    onPress={handleSignUp}
+                    disabled={isLoading}
                 >
                     <Text style={styles.signInButtonText}>Criar conta</Text>
                 </TouchableOpacity>
@@ -115,9 +149,9 @@ export default function SignUp() {
                     />
                 </View>
 
-                <View style={styles.signUpContainer}>
+                <View className="" style={styles.signUpContainer}>
                     <Text style={styles.signUpText}>Já tem uma conta? </Text>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={handleGoToSignIn}>
                         <Text style={styles.signUpLink}>Entrar</Text>
                     </TouchableOpacity>
                 </View>
