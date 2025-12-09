@@ -1,10 +1,10 @@
 // app/(trip)/trip-detail.tsx
+import { TripProposalsTab } from '@/components/itinerary/TripProposalsTab';
 import { CreatePollModal } from '@/components/poll/CreatePollModal';
 import { CreateProposalModal } from '@/components/proposal/CreateProposalModal';
+import { TripChatScreen } from '@/components/trip/TripChatScreen';
 import { TripDetailFab } from '@/components/trip/TripDetailFab';
 import { TripDetailHeader } from '@/components/trip/TripDetailHeader';
-import { TripDetailTabs } from '@/components/trip/TripDetailTabs';
-import { TripRecentActivity } from '@/components/trip/TripRecentActivity';
 import { getUsersByIds, type AppUser } from '@/services/userService';
 import { usePollStore } from '@/stores/pollStore';
 import { useProposalStore } from '@/stores/proposalStore';
@@ -35,14 +35,21 @@ export default function TripDetailScreen() {
     const { fetchProposals } = useProposalStore();
     const { fetchPolls } = usePollStore();
 
-    const [showCreateMenu, setShowCreateMenu] = useState(false);
-    const [showCreateProposal, setShowCreateProposal] = useState(false);
-    const [showCreatePoll, setShowCreatePoll] = useState(false);
-
-    // 🔥 estado para avatares reais dos membros
+    // Avatares reais dos membros
     const [memberAvatars, setMemberAvatars] = useState<string[]>([]);
     const [extraMembersCount, setExtraMembersCount] = useState(0);
-    const [loadingMembers, setLoadingMembers] = useState(false);
+
+    // Modais de conteúdo
+    const [showProposalsModal, setShowProposalsModal] = useState(false);
+    const [showItineraryModal, setShowItineraryModal] = useState(false);
+    const [showChatModal, setShowChatModal] = useState(false);
+
+    // Menu dentro do modal de Proposals
+    const [showCreateMenu, setShowCreateMenu] = useState(false);
+
+    // Modais de criação
+    const [showCreateProposal, setShowCreateProposal] = useState(false);
+    const [showCreatePoll, setShowCreatePoll] = useState(false);
 
     // Carrega a trip ao montar o componente
     useEffect(() => {
@@ -62,9 +69,6 @@ export default function TripDetailScreen() {
             }
 
             try {
-                setLoadingMembers(true);
-
-                // Preferimos memberIds (campo otimizado). Se não tiver, caímos em members.
                 const memberIds =
                     currentTrip.memberIds && currentTrip.memberIds.length > 0
                         ? currentTrip.memberIds
@@ -78,14 +82,12 @@ export default function TripDetailScreen() {
 
                 const users: AppUser[] = await getUsersByIds(memberIds);
 
-                const avatars = users
-                    .slice(0, 3)
-                    .map((user) => {
-                        const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-                            user.name || user.email
-                        )}`;
-                        return user.photoURL ?? fallback;
-                    });
+                const avatars = users.slice(0, 3).map((user) => {
+                    const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                        user.name || user.email
+                    )}`;
+                    return user.photoURL ?? fallback;
+                });
 
                 setMemberAvatars(avatars);
                 setExtraMembersCount(
@@ -95,8 +97,6 @@ export default function TripDetailScreen() {
                 console.error('❌ Erro ao carregar membros da trip:', error);
                 setMemberAvatars([]);
                 setExtraMembersCount(0);
-            } finally {
-                setLoadingMembers(false);
             }
         }
 
@@ -163,6 +163,7 @@ export default function TripDetailScreen() {
         <SafeAreaView style={styles.container}>
             <StatusBar barStyle="light-content" />
 
+            {/* HEADER DA VIAGEM */}
             <TripDetailHeader
                 coverImageUrl={
                     currentTrip.coverPhotoUrl ??
@@ -175,95 +176,231 @@ export default function TripDetailScreen() {
                 extraCount={extraMembersCount}
                 onBack={() => router.back()}
                 onOpenSettings={() => {
-                    // TODO: abrir tela de settings da trip
                     console.log('Abrir settings da trip:', currentTrip.id);
                 }}
-            // Opcional: poderia mostrar algum loading dos membros aqui se quiser
-            // loadingMembers={loadingMembers}
             />
 
-            <TripDetailTabs
-                activeTab="proposals"
-                onChangeTab={(tab) => {
-                    // TODO: integrar com navegação entre abas
-                    console.log('Tab selecionada:', tab);
-                }}
-            />
+            {/* AÇÕES PRINCIPAIS DA VIAGEM (sem tabs) */}
+            <View style={styles.actionsContainer}>
+                <Text style={styles.actionsTitle}>Trip tools</Text>
+                <Text style={styles.actionsSubtitle}>
+                    Organize ideas, your final plan and talk with your group.
+                </Text>
 
-            <TripRecentActivity tripId={currentTrip.id} />
-
-            <TripDetailFab
-                onPress={() => {
-                    console.log('Abrir menu de criação');
-                    setShowCreateMenu(true);
-                }}
-            />
-
-            {/* Menu de seleção */}
-            <Modal visible={showCreateMenu} animationType="fade" transparent>
+                {/* Proposals & Voting */}
                 <TouchableOpacity
-                    style={styles.menuBackdrop}
-                    activeOpacity={1}
-                    onPress={() => setShowCreateMenu(false)}
+                    style={styles.actionCard}
+                    onPress={() => setShowProposalsModal(true)}
                 >
-                    <View style={styles.menuContainer}>
-                        <TouchableOpacity
-                            style={styles.menuItem}
-                            onPress={() => {
-                                setShowCreateMenu(false);
-                                setShowCreateProposal(true);
-                            }}
-                        >
-                            <View
-                                style={[
-                                    styles.menuIcon,
-                                    { backgroundColor: '#fff5f5' },
-                                ]}
-                            >
-                                <Ionicons
-                                    name="restaurant-outline"
-                                    size={24}
-                                    color="#FF6B6B"
-                                />
-                            </View>
-                            <View style={styles.menuTextContainer}>
-                                <Text style={styles.menuTitle}>
-                                    New Proposal
-                                </Text>
-                                <Text style={styles.menuSubtitle}>
-                                    Suggest a place or activity
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.menuItem}
-                            onPress={() => {
-                                setShowCreateMenu(false);
-                                setShowCreatePoll(true);
-                            }}
-                        >
-                            <View
-                                style={[
-                                    styles.menuIcon,
-                                    { backgroundColor: '#eff6ff' },
-                                ]}
-                            >
-                                <Ionicons
-                                    name="bar-chart-outline"
-                                    size={24}
-                                    color="#3b82f6"
-                                />
-                            </View>
-                            <View style={styles.menuTextContainer}>
-                                <Text style={styles.menuTitle}>New Poll</Text>
-                                <Text style={styles.menuSubtitle}>
-                                    Ask the group to vote
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
+                    <View style={styles.actionIcon}>
+                        <Ionicons
+                            name="bulb-outline"
+                            size={22}
+                            color="#FF6B6B"
+                        />
                     </View>
+                    <View style={styles.actionTextContainer}>
+                        <Text style={styles.actionTitle}>
+                            Proposals & Voting
+                        </Text>
+                        <Text style={styles.actionSubtitleCard}>
+                            See ideas, vote and suggest places or activities.
+                        </Text>
+                    </View>
+                    <Ionicons
+                        name="chevron-forward"
+                        size={18}
+                        color="#9ca3af"
+                    />
                 </TouchableOpacity>
+
+                {/* Final Itinerary */}
+                <TouchableOpacity
+                    style={styles.actionCard}
+                    onPress={() => setShowItineraryModal(true)}
+                >
+                    <View
+                        style={[
+                            styles.actionIcon,
+                            { backgroundColor: '#eff6ff' },
+                        ]}
+                    >
+                        <Ionicons
+                            name="calendar-outline"
+                            size={22}
+                            color="#3b82f6"
+                        />
+                    </View>
+                    <View style={styles.actionTextContainer}>
+                        <Text style={styles.actionTitle}>Final Itinerary</Text>
+                        <Text style={styles.actionSubtitleCard}>
+                            See the final day-by-day plan once it&apos;s ready.
+                        </Text>
+                    </View>
+                    <Ionicons
+                        name="chevron-forward"
+                        size={18}
+                        color="#9ca3af"
+                    />
+                </TouchableOpacity>
+
+                {/* Group Chat */}
+                <TouchableOpacity
+                    style={styles.actionCard}
+                    onPress={() => setShowChatModal(true)}
+                >
+                    <View
+                        style={[
+                            styles.actionIcon,
+                            { backgroundColor: '#fef3c7' },
+                        ]}
+                    >
+                        <Ionicons
+                            name="chatbubbles-outline"
+                            size={22}
+                            color="#f59e0b"
+                        />
+                    </View>
+                    <View style={styles.actionTextContainer}>
+                        <Text style={styles.actionTitle}>Group Chat</Text>
+                        <Text style={styles.actionSubtitleCard}>
+                            Talk in real time with everyone in this trip.
+                        </Text>
+                    </View>
+                    <Ionicons
+                        name="chevron-forward"
+                        size={18}
+                        color="#9ca3af"
+                    />
+                </TouchableOpacity>
+            </View>
+
+            {/* ========== MODAL: PROPOSALS & VOTING ========== */}
+            <Modal
+                visible={showProposalsModal}
+                animationType="slide"
+                onRequestClose={() => {
+                    setShowProposalsModal(false);
+                    setShowCreateMenu(false);
+                }}
+            >
+                <SafeAreaView style={styles.modalContainer}>
+                    <StatusBar barStyle="dark-content" />
+
+                    {/* HEADER DO MODAL */}
+                    <View style={styles.modalHeader}>
+                        <TouchableOpacity
+                            style={styles.modalBackButton}
+                            onPress={() => {
+                                setShowProposalsModal(false);
+                                setShowCreateMenu(false);
+                            }}
+                        >
+                            <Ionicons
+                                name="chevron-back"
+                                size={20}
+                                color="#111827"
+                            />
+                        </TouchableOpacity>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.modalTitle}>
+                                Proposals & Voting
+                            </Text>
+                            <Text style={styles.modalSubtitle}>
+                                Vote on ideas and create new suggestions for{' '}
+                                {currentTrip.destination}.
+                            </Text>
+                        </View>
+                    </View>
+
+                    {/* CONTEÚDO + FAB + MENU INLINE */}
+                    <View style={styles.modalBody}>
+                        <TripProposalsTab tripId={currentTrip.id} />
+
+                        {/* FAB em overlay dentro do modal */}
+                        <View style={styles.fabOverlay}>
+                            <TripDetailFab
+                                onPress={() => {
+                                    console.log('Abrir menu de criação');
+                                    setShowCreateMenu(true);
+                                }}
+                            />
+                        </View>
+
+                        {/* MENU INLINE (SEM OUTRO MODAL) */}
+                        {showCreateMenu && (
+                            <View style={styles.menuInlineBackdrop}>
+                                {/* Fundo que fecha o menu */}
+                                <TouchableOpacity
+                                    style={styles.menuBackgroundTouchable}
+                                    activeOpacity={1}
+                                    onPress={() => setShowCreateMenu(false)}
+                                />
+
+                                {/* Card com as opções */}
+                                <View style={styles.menuContainer}>
+                                    <TouchableOpacity
+                                        style={styles.menuItem}
+                                        onPress={() => {
+                                            setShowCreateMenu(false);
+                                            setShowCreateProposal(true);
+                                        }}
+                                    >
+                                        <View
+                                            style={[
+                                                styles.menuIcon,
+                                                { backgroundColor: '#fff5f5' },
+                                            ]}
+                                        >
+                                            <Ionicons
+                                                name="restaurant-outline"
+                                                size={24}
+                                                color="#FF6B6B"
+                                            />
+                                        </View>
+                                        <View style={styles.menuTextContainer}>
+                                            <Text style={styles.menuTitle}>
+                                                New Proposal
+                                            </Text>
+                                            <Text style={styles.menuSubtitle}>
+                                                Suggest a place or activity
+                                            </Text>
+                                        </View>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        style={styles.menuItem}
+                                        onPress={() => {
+                                            setShowCreateMenu(false);
+                                            setShowCreatePoll(true);
+                                        }}
+                                    >
+                                        <View
+                                            style={[
+                                                styles.menuIcon,
+                                                { backgroundColor: '#eff6ff' },
+                                            ]}
+                                        >
+                                            <Ionicons
+                                                name="bar-chart-outline"
+                                                size={24}
+                                                color="#3b82f6"
+                                            />
+                                        </View>
+                                        <View style={styles.menuTextContainer}>
+                                            <Text style={styles.menuTitle}>
+                                                New Poll
+                                            </Text>
+                                            <Text style={styles.menuSubtitle}>
+                                                Ask the group to vote
+                                            </Text>
+                                        </View>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        )}
+                    </View>
+                </SafeAreaView>
             </Modal>
 
             {/* Modal de criação de proposta */}
@@ -285,6 +422,90 @@ export default function TripDetailScreen() {
                     fetchPolls(currentTrip.id);
                 }}
             />
+
+            {/* ========== MODAL: FINAL ITINERARY ========== */}
+            <Modal
+                visible={showItineraryModal}
+                animationType="slide"
+                onRequestClose={() => setShowItineraryModal(false)}
+            >
+                <SafeAreaView style={styles.modalContainer}>
+                    <StatusBar barStyle="dark-content" />
+
+                    <View style={styles.modalHeader}>
+                        <TouchableOpacity
+                            style={styles.modalBackButton}
+                            onPress={() => setShowItineraryModal(false)}
+                        >
+                            <Ionicons
+                                name="chevron-back"
+                                size={20}
+                                color="#111827"
+                            />
+                        </TouchableOpacity>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.modalTitle}>
+                                Final Itinerary
+                            </Text>
+                            <Text style={styles.modalSubtitle}>
+                                Soon you&apos;ll be able to organize all
+                                approved proposals into a day-by-day plan.
+                            </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.itineraryPlaceholderModal}>
+                        <Ionicons
+                            name="map-outline"
+                            size={44}
+                            color="#9ca3af"
+                        />
+                        <Text style={styles.itineraryPlaceholderTitle}>
+                            No final itinerary yet
+                        </Text>
+                        <Text style={styles.itineraryPlaceholderSubtitle}>
+                            First, use &quot;Proposals & Voting&quot; to choose
+                            the best ideas. Then you&apos;ll promote them to the
+                            final itinerary and organize by day and time.
+                        </Text>
+                    </View>
+                </SafeAreaView>
+            </Modal>
+
+            {/* ========== MODAL: GROUP CHAT ========== */}
+            <Modal
+                visible={showChatModal}
+                animationType="slide"
+                onRequestClose={() => setShowChatModal(false)}
+            >
+                <SafeAreaView style={styles.modalContainer}>
+                    <StatusBar barStyle="dark-content" />
+
+                    <View style={styles.modalHeader}>
+                        <TouchableOpacity
+                            style={styles.modalBackButton}
+                            onPress={() => setShowChatModal(false)}
+                        >
+                            <Ionicons
+                                name="chevron-back"
+                                size={20}
+                                color="#111827"
+                            />
+                        </TouchableOpacity>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.modalTitle}>Group Chat</Text>
+                            <Text style={styles.modalSubtitle}>
+                                Talk with everyone who is part of this trip.
+                            </Text>
+                        </View>
+                    </View>
+
+                    {/* Chat em tela cheia dentro do modal */}
+                    <View style={styles.chatContainer}>
+                        <TripChatScreen tripId={currentTrip.id} />
+                    </View>
+                </SafeAreaView>
+            </Modal>
         </SafeAreaView>
     );
 }
@@ -303,11 +524,131 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#6b7280',
     },
-    menuBackdrop: {
+    actionsContainer: {
+        paddingHorizontal: 16,
+        paddingTop: 16,
+        paddingBottom: 24,
+    },
+    actionsTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#111827',
+    },
+    actionsSubtitle: {
+        fontSize: 13,
+        color: '#6b7280',
+        marginTop: 4,
+    },
+    actionCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 14,
+        borderRadius: 14,
+        backgroundColor: '#ffffff',
+        marginTop: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.05,
+        shadowRadius: 6,
+        elevation: 2,
+        gap: 12,
+    },
+    actionIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#fee2e2',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    actionTextContainer: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.4)',
+    },
+    actionTitle: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#111827',
+    },
+    actionSubtitleCard: {
+        fontSize: 12,
+        color: '#6b7280',
+        marginTop: 2,
+    },
+    modalContainer: {
+        flex: 1,
+        backgroundColor: '#f9fafb',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingTop: 8,
+        paddingBottom: 12,
+        backgroundColor: '#ffffff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#e5e7eb',
+        gap: 8,
+    },
+    modalBackButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#f3f4f6',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    modalTitle: {
+        fontSize: 17,
+        fontWeight: '700',
+        color: '#111827',
+    },
+    modalSubtitle: {
+        fontSize: 13,
+        color: '#6b7280',
+        marginTop: 2,
+    },
+    modalBody: {
+        flex: 1,
+        position: 'relative',
+    },
+    fabOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        justifyContent: 'flex-end',
+        alignItems: 'flex-end',
+        paddingRight: 24,
+        paddingBottom: 24,
+        pointerEvents: 'box-none',
+    },
+    itineraryPlaceholderModal: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 24,
+    },
+    itineraryPlaceholderTitle: {
+        marginTop: 12,
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#111827',
+        textAlign: 'center',
+    },
+    itineraryPlaceholderSubtitle: {
+        marginTop: 6,
+        fontSize: 13,
+        color: '#6b7280',
+        textAlign: 'center',
+    },
+    chatContainer: {
+        flex: 1,
+    },
+    // BACKDROP & MENU INLINE (dentro do modal de Proposals)
+    menuInlineBackdrop: {
+        ...StyleSheet.absoluteFillObject,
         justifyContent: 'flex-end',
         paddingBottom: 100,
+    },
+    menuBackgroundTouchable: {
+        ...StyleSheet.absoluteFillObject,
     },
     menuContainer: {
         marginHorizontal: 20,

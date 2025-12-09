@@ -15,10 +15,13 @@ type Props = {
     tripTitle: string;
     tripDateLabel: string;
     avatars: string[];
-    extraCount?: number;
-    onBack?: () => void;
-    onOpenSettings?: () => void;
+    extraCount: number;
+    onBack: () => void;
+    onOpenSettings: () => void;
+    // 👇 nova prop, opcional
+    isLoadingMembers?: boolean;
 };
+
 
 export function TripDetailHeader({
     coverImageUrl,
