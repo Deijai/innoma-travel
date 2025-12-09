@@ -3,6 +3,7 @@ import { AuthHeader } from '@/components/auth/AuthHeader';
 import { AuthInput } from '@/components/auth/AuthInput';
 import { AuthLayout } from '@/components/auth/AuthLayout';
 import { SocialButton } from '@/components/auth/SocialButton';
+import { LoadingOverlay } from '@/components/common/LoadingOverlay';
 import { useAuthStore } from '@/stores/authStore';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
@@ -156,6 +157,7 @@ export default function SignUp() {
                     </TouchableOpacity>
                 </View>
             </View>
+            <LoadingOverlay visible={isLoading} text="Criando..." />
         </AuthLayout>
     );
 }

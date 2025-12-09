@@ -1,4 +1,5 @@
 // app/(tabs)/profile.tsx  (ou TravelProfileScreen.tsx)
+import { LoadingOverlay } from '@/components/common/LoadingOverlay';
 import { LinkedAccountsCard } from '@/components/profile/LinkedAccountsCard';
 import { NotificationsCard } from '@/components/profile/NotificationsCard';
 import { ProfileBottomNav } from '@/components/profile/ProfileBottomNav';
@@ -221,6 +222,7 @@ export default function ProfileScreen() {
                 onPressChat={() => { }}
                 onPressProfile={() => { }}
             />
+            <LoadingOverlay visible={isLoading} text="Atualizando..." />
         </SafeAreaView>
     );
 }
