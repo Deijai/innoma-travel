@@ -1,10 +1,10 @@
-import { Stack } from 'expo-router'
-import React from 'react'
-import { StyleSheet } from 'react-native'
+// app/(auth)/_layout.tsx
+import { Stack } from 'expo-router';
+import React from 'react';
 
 export default function AuthLayout() {
     return (
-        <Stack>
+        <Stack screenOptions={{ headerShown: false }}>
             <Stack.Screen
                 name="sign-in"
                 options={{ headerShown: false }}
@@ -20,12 +20,11 @@ export default function AuthLayout() {
                 options={{ headerShown: false }}
             />
 
+            {/* 🔧 corrigido: arquivo é onboarding.tsx */}
             <Stack.Screen
-                name="onbiarding"
+                name="onboarding"
                 options={{ headerShown: false }}
             />
         </Stack>
-    )
+    );
 }
-
-const styles = StyleSheet.create({})

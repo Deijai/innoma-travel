@@ -18,6 +18,7 @@ type TripStore = {
     fetchTripById: (tripId: string) => Promise<void>;
     clearTrips: () => void;
     setError: (error: string | null) => void;
+    setCurrentTrip: (trip: Trip | null) => void;
 };
 
 export const useTripStore = create<TripStore>((set) => ({
@@ -109,4 +110,6 @@ export const useTripStore = create<TripStore>((set) => ({
     setError: (error: string | null) => {
         set({ error });
     },
+    setCurrentTrip: (trip) => set({ currentTrip: trip }),
+
 }));

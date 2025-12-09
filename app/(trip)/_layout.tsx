@@ -1,20 +1,26 @@
-import { Stack } from 'expo-router'
-import React from 'react'
+// app/(trip)/_layout.tsx
+import { Stack } from 'expo-router';
 
-export default function TripLayout() {
+export default function TripGroupLayout() {
     return (
         <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="trip-detail" options={{ title: 'Trip Details' }} />
-            <Stack.Screen name="booking" options={{ title: 'Booking' }} />
-            <Stack.Screen name="create-trip" options={{ title: 'Create Trip' }} />
-            <Stack.Screen name="itinerary-approved" options={{ title: 'Itinerary Approved' }} />
-            <Stack.Screen name="add-suggestion" options={{ title: 'Add Suggestion', presentation: 'modal' }} />
-            <Stack.Screen name="suggestion-trip" options={{ title: 'Suggestion Detail' }} />
-            <Stack.Screen name="map-route-trip" options={{ title: 'Map Route Trip' }} />
-            <Stack.Screen name="trip-settings" options={{ title: 'Trip Settings' }} />
-            <Stack.Screen name="invite-friends" options={{ title: 'Invite Friends' }} />
-            <Stack.Screen name="suggestions-empty-state" options={{ title: 'Suggestions Empty State' }} />
-            <Stack.Screen name="day-plan-trip" options={{ title: 'Day Plan Trip' }} />
+            <Stack.Screen name="trip-detail" />
+            <Stack.Screen name="booking" />
+            <Stack.Screen name="create-trip" />
+            <Stack.Screen name="itinerary-approved" />
+            <Stack.Screen
+                name="add-suggestion"
+                options={{ presentation: 'modal' }}
+            />
+            <Stack.Screen name="suggestion-trip" />
+            <Stack.Screen name="map-route-trip" />
+            <Stack.Screen name="trip-settings" />
+            <Stack.Screen name="invite-friends" />
+            <Stack.Screen name="suggestions-empty-state" />
+            <Stack.Screen name="day-plan-trip" />
+
+            {/* Grupo dinâmico /trip/[id]/... */}
+            <Stack.Screen name="[id]" />
         </Stack>
-    )
+    );
 }

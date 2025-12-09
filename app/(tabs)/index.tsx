@@ -4,10 +4,11 @@ import { HomeHeader } from '@/components/home/HomeHeader';
 import { PastTripItem } from '@/components/home/PastTripItem';
 import { TripCard } from '@/components/home/TripCard';
 import { debugGetAllTrips, migrateOldTrips } from '@/services/tripService';
+import { getUsersByIds, type AppUser } from '@/services/userService';
 import { useAuthStore } from '@/stores/authStore';
 import { useTripStore } from '@/stores/tripStore';
 import { router, useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     ScrollView,
@@ -19,10 +20,22 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+type TripParticipantsMap = Record<string, { avatarUrl: string }[]>;
+
 export default function Index() {
     const user = useAuthStore((state) => state.user);
-    const { upcomingTrips, pastTrips, isLoading, fetchUpcomingTrips, fetchPastTrips } = useTripStore();
+    const {
+        upcomingTrips,
+        pastTrips,
+        isLoading,
+        fetchUpcomingTrips,
+        fetchPastTrips,
+    } = useTripStore();
+
     const [hasMigrated, setHasMigrated] = useState(false);
+    const [participantsByTrip, setParticipantsByTrip] =
+        useState<TripParticipantsMap>({});
+    const [loadingParticipants, setLoadingParticipants] = useState(false);
 
     // Carrega trips quando a tela ganhar foco
     useFocusEffect(
@@ -57,13 +70,67 @@ export default function Index() {
     );
 
     // Debug: mostra quantas trips foram carregadas
-    React.useEffect(() => {
+    useEffect(() => {
         console.log('📊 Upcoming trips:', upcomingTrips.length);
         console.log('📊 Past trips:', pastTrips.length);
         if (upcomingTrips.length > 0) {
             console.log('📍 Primeira trip:', upcomingTrips[0]);
         }
     }, [upcomingTrips, pastTrips]);
+
+    // 🔥 Carrega participantes (com foto) para as upcomingTrips
+    useEffect(() => {
+        async function loadParticipants() {
+            if (!upcomingTrips.length) {
+                setParticipantsByTrip({});
+                return;
+            }
+
+            try {
+                setLoadingParticipants(true);
+                const map: TripParticipantsMap = {};
+
+                for (const trip of upcomingTrips) {
+                    const memberIds = trip.memberIds ?? [];
+
+                    if (!memberIds.length) {
+                        map[trip.id] = [];
+                        continue;
+                    }
+
+                    try {
+                        const users: AppUser[] = await getUsersByIds(memberIds);
+
+                        const participants = users
+                            .slice(0, 3) // mostra no máx 3 bolinhas
+                            .map((user) => ({
+                                avatarUrl:
+                                    user.photoURL ??
+                                    // fallback gerado por nome/email
+                                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                                        user.name || user.email
+                                    )}`,
+                            }));
+
+                        map[trip.id] = participants;
+                    } catch (err) {
+                        console.error(
+                            '❌ Erro ao buscar usuários da trip:',
+                            trip.id,
+                            err
+                        );
+                        map[trip.id] = [];
+                    }
+                }
+
+                setParticipantsByTrip(map);
+            } finally {
+                setLoadingParticipants(false);
+            }
+        }
+
+        loadParticipants();
+    }, [upcomingTrips]);
 
     // Calcula dias restantes até o início da viagem
     function getDaysLeft(startDateStr: string): string {
@@ -97,7 +164,10 @@ export default function Index() {
             <HomeHeader
                 welcomeText="Welcome back"
                 title="My Trips"
-                avatarUrl={user?.photoURL ?? 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80'}
+                avatarUrl={
+                    user?.photoURL ??
+                    'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80'
+                }
             />
 
             {/* Conteúdo principal */}
@@ -109,7 +179,16 @@ export default function Index() {
                 {/* Upcoming Adventures */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeaderRow}>
-                        <Text style={styles.sectionTitle}>Upcoming Adventures</Text>
+                        <View>
+                            <Text style={styles.sectionTitle}>
+                                Upcoming Adventures
+                            </Text>
+                            {loadingParticipants && upcomingTrips.length > 0 && (
+                                <Text style={styles.participantsLoadingText}>
+                                    Atualizando participantes...
+                                </Text>
+                            )}
+                        </View>
                         {upcomingTrips.length > 2 && (
                             <TouchableOpacity>
                                 <Text style={styles.seeAllText}>See All</Text>
@@ -124,7 +203,8 @@ export default function Index() {
                     ) : upcomingTrips.length === 0 ? (
                         <View style={styles.emptyContainer}>
                             <Text style={styles.emptyText}>
-                                No upcoming trips yet. Create your first adventure! ✈️
+                                No upcoming trips yet. Create your first
+                                adventure! ✈️
                             </Text>
                         </View>
                     ) : (
@@ -133,37 +213,55 @@ export default function Index() {
                             showsHorizontalScrollIndicator={false}
                             contentContainerStyle={styles.upcomingScroll}
                         >
-                            {upcomingTrips.map((trip) => (
-                                <TripCard
-                                    key={trip.id}
-                                    imageUrl={
-                                        trip.coverPhotoUrl ??
-                                        'https://images.unsplash.com/photo-1537996194471-e657df975ab4?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80'
-                                    }
-                                    badgeIcon="time-outline"
-                                    badgeText={getDaysLeft(trip.startDate)}
-                                    country={trip.destination}
-                                    title={trip.destination}
-                                    participants={trip.members.slice(0, 3).map((m) => ({
-                                        avatarUrl: `https://i.pravatar.cc/150?u=${m.userId}`,
-                                    }))}
-                                    extraParticipantsLabel={
-                                        trip.members.length > 3
-                                            ? `+${trip.members.length - 3}`
-                                            : undefined
-                                    }
-                                    onPress={() => {
-                                        console.log('🎯 Navegando para trip:', trip.id);
-                                        router.push(`/(trip)/trip-detail?id=${trip.id}`);
-                                    }}
-                                />
-                            ))}
+                            {upcomingTrips.map((trip) => {
+                                const participants =
+                                    participantsByTrip[trip.id] ?? [];
+                                const totalMembers =
+                                    trip.memberIds?.length ??
+                                    trip.members?.length ??
+                                    0;
+                                const extraCount =
+                                    totalMembers > 3
+                                        ? totalMembers - 3
+                                        : 0;
+
+                                return (
+                                    <TripCard
+                                        key={trip.id}
+                                        imageUrl={
+                                            trip.coverPhotoUrl ??
+                                            'https://images.unsplash.com/photo-1537996194471-e657df975ab4?ixlib=rb-1.2.1&auto=format&fit=crop&w=600&q=80'
+                                        }
+                                        badgeIcon="time-outline"
+                                        badgeText={getDaysLeft(trip.startDate)}
+                                        country={trip.destination}
+                                        title={trip.destination}
+                                        participants={participants}
+                                        extraParticipantsLabel={
+                                            extraCount > 0
+                                                ? `+${extraCount}`
+                                                : undefined
+                                        }
+                                        onPress={() => {
+                                            console.log(
+                                                '🎯 Navegando para trip:',
+                                                trip.id
+                                            );
+                                            router.push(
+                                                `/(trip)/trip-detail?id=${trip.id}`
+                                            );
+                                        }}
+                                    />
+                                );
+                            })}
                         </ScrollView>
                     )}
                 </View>
 
                 {/* Past Journeys */}
-                <View style={[styles.section, { paddingHorizontal: 24 }]}>
+                <View
+                    style={[styles.section, { paddingHorizontal: 24 }]}
+                >
                     <Text style={styles.sectionTitle}>Past Journeys</Text>
 
                     {isLoading ? (
@@ -186,7 +284,10 @@ export default function Index() {
                                         'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?ixlib=rb-1.2.1&auto=format&fit=crop&w=200&q=80'
                                     }
                                     title={trip.destination}
-                                    dateText={formatDateRange(trip.startDate, trip.endDate)}
+                                    dateText={formatDateRange(
+                                        trip.startDate,
+                                        trip.endDate
+                                    )}
                                     rating={4.5}
                                     tags={['Travel']}
                                 />
@@ -229,6 +330,11 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: '#0f172a',
+    },
+    participantsLoadingText: {
+        fontSize: 11,
+        color: '#9ca3af',
+        marginTop: 2,
     },
     seeAllText: {
         fontSize: 13,
